@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useLanguage } from '../../contexts/LanguageContext';
 import LanguageToggle from '../../components/LanguageToggle';
 import toast from 'react-hot-toast';
@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 export default function GuestUploadPage() {
   const params = useParams();
   const accessKey = params.access_key as string;
+  const search = useSearchParams();
   const { t } = useLanguage();
 
   const [uploading, setUploading] = useState(false);
@@ -21,6 +22,7 @@ export default function GuestUploadPage() {
   const [recording, setRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const theme = (search.get('theme') as 'classic'|'dark'|'pink'|'blue'|'gray'|'green') || 'classic';
 
   useEffect(() => {
     // Check if voice messages are enabled for this event
@@ -251,16 +253,26 @@ export default function GuestUploadPage() {
     );
   }
 
+  const themeClasses: Record<string, {wrapper: string; card: string; accentText: string; dashed: string; button: string; icon: string;}> = {
+    classic: { wrapper: 'from-blue-50 to-white', card: 'bg-white', accentText: 'text-gray-900', dashed: 'border-blue-300', button: 'from-blue-600 to-purple-600', icon: 'text-blue-600' },
+    dark:    { wrapper: 'from-neutral-900 to-neutral-800', card: 'bg-neutral-900 text-neutral-100', accentText: 'text-neutral-100', dashed: 'border-neutral-600', button: 'from-amber-600 to-amber-700', icon: 'text-amber-400' },
+    pink:    { wrapper: 'from-pink-50 to-white', card: 'bg-white', accentText: 'text-pink-900', dashed: 'border-pink-300', button: 'from-pink-600 to-rose-600', icon: 'text-pink-600' },
+    blue:    { wrapper: 'from-slate-100 to-white', card: 'bg-white', accentText: 'text-blue-900', dashed: 'border-blue-300', button: 'from-blue-600 to-indigo-600', icon: 'text-blue-600' },
+    gray:    { wrapper: 'from-gray-50 to-white', card: 'bg-white', accentText: 'text-gray-900', dashed: 'border-gray-300', button: 'from-gray-700 to-gray-800', icon: 'text-gray-600' },
+    green:   { wrapper: 'from-emerald-50 to-white', card: 'bg-white', accentText: 'text-emerald-900', dashed: 'border-emerald-300', button: 'from-emerald-600 to-teal-600', icon: 'text-emerald-600' },
+  };
+  const tCls = themeClasses[theme];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-12 max-w-lg w-full relative">
+    <div className={`min-h-screen bg-gradient-to-br ${tCls.wrapper} flex items-center justify-center p-4`}>
+      <div className={`${tCls.card} rounded-2xl shadow-xl p-4 sm:p-6 md:p-12 max-w-lg w-full relative`}>
         {/* Language Toggle */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
           <LanguageToggle />
         </div>
         
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-center text-gray-900 pt-10 sm:pt-0">{t('Share Your Memory', 'Împărtășește Amintirea Ta')}</h1>
-        <p className="text-sm sm:text-base text-gray-900 font-bold text-center mb-6 sm:mb-8 px-2">{t('Choose how you want to share your memory', 'Alege modul în care vrei să împărtășești amintirea ta')}</p>
+        <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-center ${tCls.accentText} pt-10 sm:pt-0`}>{t('Share Your Memory', 'Împărtășește Amintirea Ta')}</h1>
+        <p className={`text-sm sm:text-base font-bold text-center mb-6 sm:mb-8 px-2 ${tCls.accentText}`}>{t('Choose how you want to share your memory', 'Alege modul în care vrei să împărtășești amintirea ta')}</p>
 
         {/* Upload Type Selector */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
@@ -312,12 +324,12 @@ export default function GuestUploadPage() {
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center cursor-pointer transition-all min-h-[120px] sm:min-h-[180px] flex flex-col items-center justify-center ${
                   isDragging 
-                    ? 'border-blue-600 bg-blue-100 scale-105' 
-                    : 'border-gray-300 hover:border-blue-600 hover:bg-blue-50'
+                    ? `${tCls.dashed} bg-white/40 scale-105` 
+                    : `${tCls.dashed} hover:bg-white/50`
                 }`}
                 onClick={() => document.getElementById('fileInput')?.click()}
               >
-                <div className="text-3xl sm:text-4xl mb-2 sm:mb-4">
+                <div className={`text-3xl sm:text-4xl mb-2 sm:mb-4 ${tCls.icon}`}>
                   {uploadType === 'photo' ? '📸' : '🎥'}
                 </div>
                 <p className="text-sm sm:text-base text-gray-900 font-bold mb-1 sm:mb-2 px-2">
@@ -368,7 +380,7 @@ export default function GuestUploadPage() {
                 <button
                   onClick={handleUpload}
                   disabled={uploading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full bg-gradient-to-r ${tCls.button} text-white py-4 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {uploading 
                     ? `${Math.round(uploadProgress)}% - ${t('Uploading...', 'Se încarcă...')}` 

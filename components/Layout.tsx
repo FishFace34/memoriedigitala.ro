@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import UserMenu from '../app/components/UserMenu';
 
 interface User {
   name: string;
@@ -70,6 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               )}
               
+              <UserMenu />
               <Link href="/siparis" className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all">
                 Order Now
               </Link>

@@ -37,6 +37,9 @@ export default function AdminPanel() {
   const [showQR, setShowQR] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [notification, setNotification] = useState('');
+  const [editingName, setEditingName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [theme, setTheme] = useState<'classic' | 'dark' | 'pink' | 'blue' | 'gray' | 'green'>('classic');
 
   useEffect(() => {
     loadEventAndMedia();
@@ -53,7 +56,9 @@ export default function AdminPanel() {
       setMedia(mediaData.media);
 
       if (eventData.event) {
-        const url = `${process.env.NEXT_PUBLIC_APP_URL}/e/${eventData.event.access_key}`;
+        setEditingName(eventData.event.event_name || '');
+        const baseUrl = (process.env.NEXT_PUBLIC_APP_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '');
+        const url = `${baseUrl}/e/${eventData.event.access_key}?theme=${theme}`;
         const qrUrl = await QRCode.toDataURL(url);
         setQrCodeUrl(qrUrl);
       }
@@ -105,35 +110,38 @@ export default function AdminPanel() {
     
     try {
       // Create a simple HTML page with QR code that can be printed
-      const eventUrl = `${process.env.NEXT_PUBLIC_APP_URL}/e/${event.access_key}`;
+      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '');
+      const eventUrl = `${baseUrl}/e/${event.access_key}?theme=${theme}`;
       const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
           <title>QR Code - ${event.event_name || 'Event'}</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 50px; text-align: center; }
-            .qr-container { display: inline-block; padding: 20px; border: 2px solid #000; margin: 20px; }
-            h1 { color: #1e40af; }
-            h2 { color: #6b7280; }
-            .instructions { margin-top: 30px; }
-            @media print {
-              body { padding: 0; }
-              .qr-container { page-break-after: always; }
-            }
+            @media print { @page { size: A4; margin: 18mm; } }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #0f172a; }
+            .wrap { max-width: 700px; margin: 0 auto; text-align: center; }
+            .event-name { font-size: 42px; font-weight: 700; margin: 32px 0 24px; letter-spacing: .5px; }
+            .qr-box { display: inline-block; padding: 28px; border-radius: 16px; border: 3px dashed #cbd5e1; }
+            .qr-img { width: 280px; height: 280px; }
+            .desc { margin: 28px auto 40px; font-size: 18px; line-height: 1.6; max-width: 560px; color: #334155; }
+            .desc b { color: #0f172a; }
+            .brand { margin-top: 28px; font-weight: 800; font-size: 28px; }
+            .brand .g { background: linear-gradient(90deg, #2563eb, #7c3aed); -webkit-background-clip: text; background-clip: text; color: transparent; }
+            .url { margin-top: 6px; font-size: 12px; color: #64748b; }
           </style>
         </head>
         <body>
-          <div class="qr-container">
-            <h1>MemorieDigitala.ro</h1>
-            <h2>Scan to share your memories</h2>
-            <img src="${qrCodeUrl}" alt="QR Code" style="width: 300px; height: 300px;" />
-            <div class="instructions">
-              <p><strong>1. Scan this QR code with your phone</strong></p>
-              <p><strong>2. Upload your photos and videos</strong></p>
-              <p><strong>3. Share the memories!</strong></p>
+          <div class="wrap">
+            <div class="event-name">${event.event_name || 'Event Name'}</div>
+            <div class="qr-box">
+              <img class="qr-img" src="${qrCodeUrl}" alt="QR Code" />
             </div>
-            <p style="color: #9ca3af; font-size: 10px;">Event ID: ${event.event_id}</p>
+            <div class="desc">
+              Scan the QR code to share your <b>videos</b> and <b>photos</b> with us and leave us a <b>voice note</b>.
+            </div>
+            <div class="brand"><span class="g">MemorieDigitala</span></div>
+            <div class="url">${eventUrl}</div>
           </div>
           
           <script>
@@ -204,19 +212,78 @@ export default function AdminPanel() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Event Info */}
+        {/* Event Info & Edit */}
         <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-8">
-          <h2 className="text-lg md:text-xl font-bold mb-4 text-gray-900">{event.event_name || 'Nedefinit'}</h2>
           <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold mb-2 text-gray-900">{t('Event Name', 'Nume Eveniment')}</label>
+              <div className="flex gap-2">
+                <input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t('Enter event name', 'Introdu numele evenimentului')}
+                />
+                <button
+                  disabled={savingName}
+                  onClick={async () => {
+                    try {
+                      setSavingName(true);
+                      const res = await fetch('/api/update-event', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ eventId, eventName: editingName }),
+                      });
+                      const data = await res.json();
+                      if (res.ok) {
+                        setEvent({ ...(event as Event), event_name: data.event.event_name });
+                        setNotification(t('Event name updated', 'Numele evenimentului a fost actualizat'));
+                        setTimeout(() => setNotification(''), 2000);
+                      } else {
+                        alert(data.error || 'Error');
+                      }
+                    } finally {
+                      setSavingName(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold"
+                >
+                  {t('Save', 'Salvează')}
+                </button>
+              </div>
+            </div>
             <div>
               <p className="text-gray-900 font-bold">Status:</p>
               <p className="font-bold text-gray-900">{event.status}</p>
-            </div>
-            <div>
-              <p className="text-gray-900 font-bold">Preț:</p>
+              <p className="text-gray-900 font-bold mt-2">Preț:</p>
               <p className="font-bold text-gray-900">{Number(event.total_price).toFixed(2)} RON</p>
             </div>
           </div>
+        </div>
+
+        {/* Theme Selector */}
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-8">
+          <p className="text-gray-900 font-bold mb-3">{t('Upload Page Theme', 'Temă Pagină Upload')}</p>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {(['classic','dark','pink','blue','gray','green'] as const).map((th) => (
+              <button
+                key={th}
+                onClick={async () => {
+                  setTheme(th);
+                  if (event) {
+                    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '');
+                    const url = `${baseUrl}/e/${event.access_key}?theme=${th}`;
+                    const qrUrl = await QRCode.toDataURL(url);
+                    setQrCodeUrl(qrUrl);
+                  }
+                }}
+                className={`px-3 py-2 rounded-lg border text-sm font-semibold capitalize ${theme === th ? 'border-blue-600' : 'border-gray-300'}`}
+              >
+                {th}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-600 mt-2">{t('QR code and share link include selected theme.', 'QR-ul și linkul includ tema selectată.')}</p>
         </div>
 
         {/* Quick Actions */}
@@ -253,9 +320,7 @@ export default function AdminPanel() {
                 <img src={qrCodeUrl} alt="QR Code" className="w-full max-w-xs" />
               </div>
               <div className="bg-gray-100 p-4 rounded mb-4 break-all border-2 border-gray-300">
-                <p className="text-xs font-mono text-gray-900 font-bold">
-                  {`${process.env.NEXT_PUBLIC_APP_URL}/e/${event.access_key}`}
-                </p>
+              <p className="text-xs font-mono text-gray-900 font-bold">{`${((process.env.NEXT_PUBLIC_APP_URL as string) || (typeof window !== 'undefined' ? window.location.origin : ''))}/e/${event.access_key}?theme=${theme}`}</p>
               </div>
               <button
                 onClick={() => setShowQR(false)}

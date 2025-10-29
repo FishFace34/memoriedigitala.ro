@@ -124,6 +124,11 @@ export default function LoginPage() {
             </Link>
           </p>
           <p className="mt-2">
+            <Link href="/forgot-password" className="text-blue-600 font-bold hover:underline">
+              {t('Forgot your password?', 'Ai uitat parola?')}
+            </Link>
+          </p>
+          <p className="mt-2">
             <Link href="/" className="text-gray-600 hover:underline">
               ← {t('Back to Home', 'Înapoi la Pagina Principală')}
             </Link>

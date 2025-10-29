@@ -62,3 +62,30 @@ export async function sendOrderConfirmationEmail(
 }
 
 
+export async function sendPasswordResetEmail(
+  email: string,
+  name: string,
+  resetUrl: string
+) {
+  const mailOptions = {
+    from: process.env.FROM_EMAIL,
+    to: email,
+    subject: 'Reset your MemorieDigitala.ro password',
+    html: `
+      <h2>Hi ${name},</h2>
+      <p>You requested to reset your password. Click the button below to set a new password. This link expires in 30 minutes.</p>
+      <p><a href="${resetUrl}" style="background:#1d4ed8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">Reset Password</a></p>
+      <p>If you did not request this, you can ignore this email.</p>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (e) {
+    console.error('Failed to send password reset email', e);
+    return false;
+  }
+}
+
+

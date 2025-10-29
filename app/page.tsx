@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useLanguage } from './contexts/LanguageContext';
 import LanguageToggle from './components/LanguageToggle';
+import UserMenu from './components/UserMenu';
 
 export default function Home() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
@@ -75,6 +76,7 @@ export default function Home() {
                 </Link>
               )}
               <LanguageToggle />
+              <UserMenu />
               <Link href="/siparis" className="px-4 md:px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all min-h-[44px] flex items-center">
                 {t('Order Now', 'Comandă Acum')}
               </Link>
@@ -83,6 +85,7 @@ export default function Home() {
             {/* Mobile Navigation */}
             <div className="flex md:hidden items-center gap-2">
               <LanguageToggle />
+              <UserMenu />
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
