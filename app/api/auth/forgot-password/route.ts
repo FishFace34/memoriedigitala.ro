@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
     const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
-    await sendPasswordResetEmail(user.email, user.name || 'User', resetUrl);
+    const sent = await sendPasswordResetEmail(user.email, user.name || 'User', resetUrl);
+    if (!sent) {
+      return NextResponse.json({ error: 'Failed to send reset email. Please check SMTP settings.' }, { status: 500 });
+    }
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

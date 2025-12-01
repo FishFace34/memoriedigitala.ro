@@ -1,14 +1,18 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: process.env.SMTP_PORT === '465', // true for 465, false for 587
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+function getTransporter() {
+  const port = Number(process.env.SMTP_PORT || 465);
+  const secure = port === 465; // 465 = SSL, 587 = STARTTLS
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 
 export async function sendOrderConfirmationEmail(
   email: string,
@@ -19,7 +23,7 @@ export async function sendOrderConfirmationEmail(
   eventUrl: string
 ) {
   const mailOptions = {
-    from: process.env.FROM_EMAIL,
+    from: process.env.FROM_EMAIL || process.env.SMTP_USER,
     to: email,
     subject: 'Comanda ta MemorieDigitala.ro a fost confirmată!',
     html: `
@@ -51,7 +55,7 @@ export async function sendOrderConfirmationEmail(
       secure: process.env.SMTP_PORT === '465',
       user: process.env.SMTP_USER
     });
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
     console.log('Email sent successfully to:', email);
     return true;
   } catch (error) {
@@ -68,7 +72,7 @@ export async function sendPasswordResetEmail(
   resetUrl: string
 ) {
   const mailOptions = {
-    from: process.env.FROM_EMAIL,
+    from: process.env.FROM_EMAIL || process.env.SMTP_USER,
     to: email,
     subject: 'Reset your MemorieDigitala.ro password',
     html: `
@@ -77,10 +81,11 @@ export async function sendPasswordResetEmail(
       <p><a href="${resetUrl}" style="background:#1d4ed8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">Reset Password</a></p>
       <p>If you did not request this, you can ignore this email.</p>
     `,
+    text: `Hi ${name},\n\nReset your password using the link below (valid for 30 minutes):\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
     return true;
   } catch (e) {
     console.error('Failed to send password reset email', e);

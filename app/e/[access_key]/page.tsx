@@ -19,6 +19,7 @@ export default function GuestUploadPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState(false);
   const [voiceMessageEnabled, setVoiceMessageEnabled] = useState(false);
+  const [eventName, setEventName] = useState<string>('');
   const [recording, setRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -32,6 +33,7 @@ export default function GuestUploadPage() {
         const data = await response.json();
         if (data.event) {
           setVoiceMessageEnabled(data.event.voice_message_enabled || false);
+          setEventName(data.event.event_name || '');
         }
       } catch (error) {
         console.error('Error checking event:', error);
@@ -271,15 +273,14 @@ export default function GuestUploadPage() {
           <LanguageToggle />
         </div>
         
-        <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-center ${tCls.accentText} pt-10 sm:pt-0`}>{t('Share Your Memory', 'Împărtășește Amintirea Ta')}</h1>
-        <p className={`text-sm sm:text-base font-bold text-center mb-6 sm:mb-8 px-2 ${tCls.accentText}`}>{t('Choose how you want to share your memory', 'Alege modul în care vrei să împărtășești amintirea ta')}</p>
+        <h1 className={`text-3xl md:text-4xl font-serif mb-6 text-center ${tCls.accentText}`}>{eventName || t('Event Name','Nume Eveniment')}</h1>
 
         {/* Upload Type Selector */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
           <button
             onClick={() => setUploadType('photo')}
-            className={`p-2 sm:p-4 rounded-lg border-2 transition min-h-[60px] sm:min-h-[80px] flex flex-col items-center justify-center text-xs sm:text-sm ${
-              uploadType === 'photo' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+            className={`p-2 sm:p-4 rounded-xl border-2 transition min-h-[60px] sm:min-h-[80px] flex flex-col items-center justify-center text-xs sm:text-sm ${
+              uploadType === 'photo' ? 'border-black bg-white' : 'border-gray-200 bg-white/70'
             }`}
           >
             <span className="text-lg sm:text-xl mb-1">📸</span>
@@ -287,8 +288,8 @@ export default function GuestUploadPage() {
           </button>
           <button
             onClick={() => setUploadType('video')}
-            className={`p-2 sm:p-4 rounded-lg border-2 transition min-h-[60px] sm:min-h-[80px] flex flex-col items-center justify-center text-xs sm:text-sm ${
-              uploadType === 'video' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+            className={`p-2 sm:p-4 rounded-xl border-2 transition min-h-[60px] sm:min-h-[80px] flex flex-col items-center justify-center text-xs sm:text-sm ${
+              uploadType === 'video' ? 'border-black bg-white' : 'border-gray-200 bg-white/70'
             }`}
           >
             <span className="text-lg sm:text-xl mb-1">🎥</span>
@@ -297,12 +298,12 @@ export default function GuestUploadPage() {
           {voiceMessageEnabled && (
             <button
               onClick={() => setUploadType('audio')}
-              className={`p-2 sm:p-4 rounded-lg border-2 transition min-h-[60px] sm:min-h-[80px] flex flex-col items-center justify-center text-xs sm:text-sm ${
-                uploadType === 'audio' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+              className={`p-2 sm:p-4 rounded-xl border-2 transition min-h-[60px] sm:min-h-[80px] flex flex-col items-center justify-center text-xs sm:text-sm ${
+                uploadType === 'audio' ? 'border-black bg-white' : 'border-gray-200 bg-white/70'
               }`}
             >
               <span className="text-lg sm:text-xl mb-1">🎤</span>
-              <span>{t('Message', 'Mesaj')}</span>
+              <span>{t('Voice Note', 'Notă Vocală')}</span>
             </button>
           )}
         </div>
@@ -403,39 +404,25 @@ export default function GuestUploadPage() {
 
         {/* Audio Recording */}
         {uploadType === 'audio' && voiceMessageEnabled && (
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-              <div className="text-4xl mb-4">🎤</div>
-              <p className="text-gray-900 font-bold mb-4">{t('Record your voice message', 'Înregistrează mesajul tău vocal')}</p>
-              
+          <div className="space-y-6">
+            <div className={`rounded-2xl border-2 border-dashed ${tCls.dashed} bg-white/70 p-6 text-center`}>
+              <h2 className={`text-2xl font-semibold mb-2 ${tCls.accentText}`}>{t('Leave a voice note', 'Lasă o notă vocală')}</h2>
+              <p className="text-amber-800/80 italic mb-6">{t('Save your voice memo by clicking the button below.', 'Salvează-ți mesajul vocal apăsând butonul de mai jos.')}</p>
               {!recording ? (
-                <button
-                  onClick={startRecording}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                >
-                  {t('Start Recording', 'Începe Înregistrarea')}
+                <button onClick={startRecording} className="mx-auto w-[140px] h-[140px] rounded-full bg-gradient-to-b from-amber-600 to-amber-700 shadow-xl text-white text-4xl flex items-center justify-center">
+                  🎤
                 </button>
               ) : (
-                <div className="space-y-4">
+                <div className="flex flex-col items-center gap-3">
                   <div className="text-3xl animate-pulse text-red-600">●</div>
-                  <p className="text-gray-900 font-bold">{t('Recording...', 'Se înregistrează...')}</p>
-                  <button
-                    onClick={stopRecording}
-                    className="bg-red-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition"
-                  >
-                    {t('Stop Recording', 'Oprește Înregistrarea')}
-                  </button>
+                  <p className={`${tCls.accentText} font-semibold`}>{t('Recording...', 'Se înregistrează...')}</p>
+                  <button onClick={stopRecording} className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold">{t('Stop Recording', 'Oprește Înregistrarea')}</button>
                 </div>
               )}
             </div>
-
             {audioBlob && (
-              <button
-                onClick={handleVoiceUpload}
-                disabled={uploading}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-              >
-                {uploading ? t('Uploading...', 'Se încarcă...') : t('Send Message', 'Trimite Mesajul')}
+              <button onClick={handleVoiceUpload} disabled={uploading} className={`w-full bg-gradient-to-r ${tCls.button} text-white py-4 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50`}>
+                {uploading ? t('Uploading...', 'Se încarcă...') : t('Send Voice Note', 'Trimite Nota Vocală')}
               </button>
             )}
           </div>
